@@ -1,45 +1,38 @@
 package org.example.interview_round_2.single_threaded;
 
+import java.util.Optional;
+
 public class TradingEngine {
     private final OrderBook orderBook = new OrderBook();
 
-    public Trade processOrder(Order newOrder) {
-        Trade trade;
-        if (newOrder.side() == Order.Side.BUY) {
-            trade = tryMatchBuyOrder(newOrder);
-        } else {
-            trade = tryMatchSellOrder(newOrder);
+    public Optional<Trade> processOrder(Order newOrder) {
+        Optional<Trade> trade = (newOrder.side() == Order.Side.BUY)
+                ? tryMatchBuyOrder(newOrder)
+                : tryMatchSellOrder(newOrder);
+
+        // If no trade occurred, add the order to the book.
+        if (trade.isEmpty()) {
+            orderBook.addOrder(newOrder);
         }
 
-        if (trade != null) {
-            return trade;
-        }
-
-        orderBook.addOrder(newOrder);
-        return null;
+        return trade;
     }
 
-    private Trade tryMatchBuyOrder(Order buyOrder) {
-        Order bestAsk = orderBook.getBestAsk();
-        if (bestAsk != null && buyOrder.price().compareTo(bestAsk.price()) >= 0) {
-            // Execute trade at ask price
-            return new Trade(buyOrder.id(),
-                    bestAsk.id(),
-                    Math.min(buyOrder.quantity(), bestAsk.quantity()),
-                    bestAsk.price());
-        }
-        return null;
+    private Optional<Trade> tryMatchBuyOrder(Order buyOrder) {
+        return Optional.ofNullable(orderBook.getBestAsk())
+                .filter(bestAsk -> buyOrder.price().compareTo(bestAsk.price()) >= 0)
+                .map(bestAsk -> new Trade(buyOrder.id(),
+                        bestAsk.id(),
+                        Math.min(buyOrder.quantity(), bestAsk.quantity()),
+                        bestAsk.price()));
     }
 
-    private Trade tryMatchSellOrder(Order sellOrder) {
-        Order bestBid = orderBook.getBestBid();
-        if (bestBid != null && sellOrder.price().compareTo(bestBid.price()) <= 0) {
-            // Execute trade at bid price
-            return new Trade(bestBid.id(), sellOrder.id(),
-                    Math.min(sellOrder.quantity(), bestBid.quantity()),
-                    bestBid.price());
-        }
-        return null;
+    private Optional<Trade> tryMatchSellOrder(Order sellOrder) {
+        return Optional.ofNullable(orderBook.getBestBid())
+                .filter(bestBid -> sellOrder.price().compareTo(bestBid.price()) <= 0)
+                .map(bestBid -> new Trade(bestBid.id(), sellOrder.id(),
+                        Math.min(sellOrder.quantity(), bestBid.quantity()),
+                        bestBid.price()));
     }
 }
 

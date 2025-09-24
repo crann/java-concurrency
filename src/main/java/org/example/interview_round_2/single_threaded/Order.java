@@ -3,7 +3,6 @@ package org.example.interview_round_2.single_threaded;
 import java.math.BigDecimal;
 
 public record Order(String id, String symbol, Order.Side side, int quantity, BigDecimal price) {
-
     public enum Side {
         BUY,
         SELL

@@ -18,12 +18,9 @@ public class OrderBook {
     public List<Trade> processOrder(Order newOrder) {
         writeLock.lock();
         try {
-            List<Trade> trades = new ArrayList<>();
-            if (newOrder.side() == Order.Side.BUY) {
-                matchBuyOrder(newOrder, trades);
-            } else {
-                matchSellOrder(newOrder, trades);
-            }
+            List<Trade> trades = (newOrder.side() == Order.Side.BUY)
+                    ? matchBuyOrder(newOrder)
+                    : matchSellOrder(newOrder);
 
             // If the new order is not fully filled, add it to the order book.
             if (newOrder.quantity() > 0) {
@@ -46,7 +43,8 @@ public class OrderBook {
     }
 
     // This is a private helper method and must be called from within a write lock.
-    private void matchBuyOrder(Order buyOrder, List<Trade> trades) {
+    private List<Trade> matchBuyOrder(Order buyOrder) {
+        List<Trade> trades = new ArrayList<>();
         while (buyOrder.quantity() > 0 && !sellOrders.isEmpty()) {
             Order bestAsk = sellOrders.firstEntry().getValue();
             if (buyOrder.price().compareTo(bestAsk.price()) < 0) {
@@ -63,10 +61,12 @@ public class OrderBook {
                 sellOrders.remove(bestAsk.price());
             }
         }
+        return trades;
     }
 
     // This is a private helper method and must be called from within a write lock.
-    private void matchSellOrder(Order sellOrder, List<Trade> trades) {
+    private List<Trade> matchSellOrder(Order sellOrder) {
+        List<Trade> trades = new ArrayList<>();
         while (sellOrder.quantity() > 0 && !buyOrders.isEmpty()) {
             Order bestBid = buyOrders.firstEntry().getValue();
             if (sellOrder.price().compareTo(bestBid.price()) > 0) {
@@ -83,5 +83,6 @@ public class OrderBook {
                 buyOrders.remove(bestBid.price());
             }
         }
+        return trades;
     }
 }

@@ -18,10 +18,10 @@ public class Main {
 
         List<CompletableFuture<Void>> futures = Stream.of(
                 new Order("B1", "AAPL", Order.Side.BUY, 100, BigDecimal.valueOf(151.0)),
-                new Order("S1", "AAPL", Order.Side.SELL, 70, BigDecimal.valueOf(150.5)), // Should match B1
+                new Order("S1", "AAPL", Order.Side.SELL, 70, BigDecimal.valueOf(150.5)),
                 new Order("B2", "AAPL", Order.Side.BUY, 200, BigDecimal.valueOf(150.0)),
                 new Order("S2", "AAPL", Order.Side.SELL, 30, BigDecimal.valueOf(152.0)),
-                new Order("B3", "AAPL", Order.Side.BUY, 80, BigDecimal.valueOf(151.5))  // Should NOT match S2 (price is too low)
+                new Order("B3", "AAPL", Order.Side.BUY, 80, BigDecimal.valueOf(151.5))
         ).map(order -> CompletableFuture.runAsync(() -> {
             System.out.println(Thread.currentThread().getName() + ": Submitting " + order.side() + " " + order.quantity() + " @ " + order.price());
             List<Trade> trades = engine.processOrder(order);
